@@ -12,10 +12,10 @@ app.use(bodyParser.json())
 //app.use(bodyParser.urlencoded({ extended: true }))
 app.use(multer().any())
 
-mongoose.connect("mongodb+srv://saurabh042160:iafSq7ML1zCfugKI@cluster1.ymdh1.mongodb.net/GROUP-19",
+mongoose.connect("mongodb+srv://manish:iXN1zqLOlpx5PBN6@cluster0.cprui.mongodb.net/group28Database",
     { useNewUrlParser: true })
 
-    .then(() => console.log("MongoDB is Connected...🥳🎉🎈"))
+    .then(() => console.log("MongoDB is Connected"))
     .catch((err) => console.log(err.message))
 
 app.use('/', routes)

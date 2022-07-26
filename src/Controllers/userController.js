@@ -18,7 +18,7 @@ const saltRounds = 10;
 
 const createUser = async (req, res) => {
     try {
-        let data = JSON.parse(JSON.stringify(req.body));;
+        let data = JSON.parse(JSON.stringify(req.body));
 
         let profileImage = req.files;
         let { fname, lname, email, phone, password, address } = data;
@@ -108,9 +108,9 @@ const createUser = async (req, res) => {
         };
         let result = await userModel.create(obj);
         return res.status(201).send({ status: true, message: 'Success', data: result });
-    } catch (e) {
-        console.log(e.message);
-       return res.status(500).send({ status: false, message: e.message });
+    } catch (err) {
+        console.log(err.message);
+       return res.status(500).send({ status: false, message: err.message });
     }
 };
 
@@ -146,149 +146,5 @@ const loginUser = async function (req, res) {
         return res.status(500).send({ status: false, message: "Error", error: err.message });
     }
 };
-//====================================================[GET USER BY ID]====================================================
 
-const getUserProfile = async function (req, res) {
-    try {
-        const userId = req.params.userId;
-        const tokenUserId = req.decodeToken.userId;
-
-        if (!isValidObjectId(userId)) {
-            return res.status(400).send({ status: false, message: "Invalid userId in params" });
-        }
-        const userProfile = await userModel.findOne({ _id: userId });
-        if (!userProfile) {
-            return res.status(404).send({ status: false, message: "User doesn't exits" });
-        }
-        if (tokenUserId !== userProfile._id.toString()) {
-            return res.status(403).send({ status: false, message: "Unauthorized access" });
-        }
-        return res.status(200).send({ status: true, message: "Success", data: userProfile, });
-    } catch (error) {
-        return res.status(500).send({ status: false, message: error.message });
-    }
-};
-
-///===================================================[USER UPDATE API ]====================================================
-const updateUser = async function (req, res) {
-    try {
-        let data = JSON.parse(JSON.stringify(req.body));
-
-        let checkdata = anyObjectKeysEmpty(data)
-        if (checkdata) return res.status(400).send({ status: false, message: `${checkdata} can't be empty` });
-
-        let userId = req.params.userId;
-        if (!isValidObjectId(userId)) 
-            return res.status(400).send({ status: false, message: "Invalid userId in params" });
-            let { fname, lname, email, phone, password, address } = data;
-
-        
-        let userProfile = await userModel.findOne({ _id: userId });
-        if (!userProfile) return res.status(404).send({ status: false, message: "No user found" });
-
-        let tokenUserId = req.decodeToken.userId;
-        if (userProfile._id.toString() !== tokenUserId)
-            return res.status(403).send({ status: false, message: "Unauthorized access" });
-
-
-        const profileImage = req.files;
-        if (isValidRequestBody(data) && typeof profileImage === 'undefined')
-            return res.status(400).send({ status: false, message: "enter data for update" });
-
-        // validation for empty fname and lname
-        if (!isEmpty(fname)) {
-            if (!fname.match(/^[a-zA-Z\s]+$/))
-                return res.status(400).send({ status: false, message: "enter valid fname (Only alpahabets)" });
-            userProfile.fname = fname;
-        }
-
-        if (!isEmpty(lname)) {
-            if (!fname.match(/^[a-zA-Z\s]+$/))
-                return res.status(400).send({ status: false, message: "enter valid fname (Only alpahabets)" });
-            userProfile.lname = lname;
-        }
-
-        if (!isEmpty(email)) {
-            if (!isValidEmail(email))
-                return res.status(400).send({ status: false, message: "enter valid email" });
-            let uniqueEmail = await userModel.findOne({ email: email });
-            if (uniqueEmail) return res.status(400).send({ status: false, msg: " email is already exists" });
-            userProfile.email = email;
-        }
-
-        if (!isEmpty(phone)) {
-            if (!isValidPhone(phone))
-                return res.status(400).send({ status: false, msg: `phone number is not valid e.g-[+91897654321]` });
-            let phoneCheck = await userModel.findOne({ phone: phone });
-            if (phoneCheck) return res.status(400).send({ status: false, message: "phone number already exist" });
-            userProfile.phone = phone;
-        }
-
-        if (!isEmpty(password)) {
-            if (!isValidPassword(password))
-                return res.status(400).send({ status: false, message: "password should contain min one alphabet, number, specical character & Length 8-15" });
-            const salt = await bcrypt.genSalt(saltRounds);
-            const hashPassword = await bcrypt.hash(password, salt);
-            userProfile.password = hashPassword;
-        }
-
-        if (!isEmpty(address)) {
-            let add = JSON.parse(address)
-            if (add.shipping) {
-                if (typeof add.shipping != 'object' || Object.keys(add.shipping).length == 0)
-                    return res.status(400).send({ status: false, message: "Shipping address not valid" })
-
-                if (add.shipping.street) {
-                    if (isEmpty(add.shipping.street))
-                        return res.status(400).send({ status: false, message: "Shipping address street not valid" })
-                    userProfile.address.shipping.street = add.shipping.street
-                } if (add.shipping.city) {
-                    if (isEmpty(add.shipping.city))
-                        return res.status(400).send({ status: false, message: "Shipping address city not valid" })
-                    userProfile.address.shipping.city = add.shipping.city
-                } if (add.shipping.pincode) {
-                    if (isEmpty(add.shipping.pincode) || !checkPincode(add.shipping.pincode))
-                        return res.status(400).send({ status: false, message: "Shipping address pincode not valid" })
-                    userProfile.address.shipping.pincode = add.shipping.pincode
-                }
-            }
-
-            if (add.billing) {
-                if (typeof add.billing != 'object' || Object.keys(add.billing).length == 0)
-                    return res.status(400).send({ status: false, message: "billing address not valid" })
-
-                if (add.billing.street) {
-                    if (isEmpty(add.billing.street))
-                        return res.status(400).send({ status: false, message: "Billing address street not valid" })
-                    userProfile.address.billing.street = add.billing.street
-                } if (add.billing.city) {
-                    if (isEmpty(add.billing.city))
-                        return res.status(400).send({ status: false, message: "billing address city not valid" })
-                    userProfile.address.billing.city = add.billing.city
-                } if (add.billing.pincode) {
-                    if (isEmpty(add.billing.pincode) || !checkPincode(add.billing.pincode))
-                        return res.status(400).send({ status: false, message: "billing pincode invalid" })
-                    userProfile.address.billing.pincode = add.billing.pincode
-                }
-            }
-        }
-        // if(profileImage){
-        // console.log("a")
-        // }
-        if (profileImage.length > 0) {
-            if (profileImage.length > 1)
-                return res.status(400).send({ status: false, message: "only one image at a time" });
-            if (!checkImage(profileImage[0].originalname))
-                return res.status(400).send({ status: false, message: "format must be jpeg/jpg/png only" })
-            let uploadedFileURL = await uploadFile(profileImage[0]);
-            userProfile.profileImage = uploadedFileURL;
-        }
-
-        await userProfile.save();
-        res.status(200).send({status: true,message: "User profile updated",data: userProfile});
-
-    } catch (err) {
-        return res.status(500).send({status: false, err: err.message });
-    }
-};
-module.exports = { createUser, loginUser, getUserProfile, updateUser, };
+module.exports = { createUser, loginUser };
