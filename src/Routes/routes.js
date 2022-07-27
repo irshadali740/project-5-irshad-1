@@ -1,7 +1,9 @@
 const express = require("express");
 const router = express.Router()
 const mid = require('../Middlewares/auth')
+
 const userController = require('../Controllers/userController')
+const productController = require('../Controllers/productController')
 
 
 //user routes
@@ -9,6 +11,11 @@ router.post('/register', userController.createUser)
 router.post('/login', userController.loginUser)
 router.get('/user/:userId/profile', mid.mid1, userController.getUserProfile)
 router.put('/user/:userId/profile', mid.mid1, userController.updateUser)
+
+//product api
+router.post('/products', productController.createProduct)
+router.get("/products/:productId",productController.productByid)
+
 
 // if api is invalid OR wrong URL
 router.all("/*", function (req, res) {

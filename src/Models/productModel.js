@@ -19,7 +19,7 @@ const productSchema = new mongoose.Schema(
             trim:true
           },
           currencyId:{
-            type:string, // rupee symbol
+            type:String, // rupee symbol
             required: true,
             trim: true
           },
