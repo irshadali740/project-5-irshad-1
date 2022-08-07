@@ -9,8 +9,6 @@ let isValidRequestBody = function (body) {
 let isEmpty = function (value) {
     if (typeof value === 'undefined' || value === null) return true;
     if (typeof value === 'string' && value.trim().length === 0) return true;
-    
-
     return false;
 }
 
